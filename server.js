@@ -15,9 +15,18 @@ app.get('/', function (req, res) {
     res.send('Todo API Root');
 });
 
-// GET /todos
+// GET /todos?completed=true
 app.get('/todos', function (req, res) {
-    res.json(todos);
+    var queryParams = req.query;//req.query => key: "value" (value is a always a string!)
+    var filteredTodos = todos;
+
+    if(queryParams.hasOwnProperty('completed') && queryParams.completed === 'true'){
+        filteredTodos = _.where(filteredTodos, {completed: true});
+    } else if (queryParams.hasOwnProperty('completed') && queryParams.completed === 'false') {
+        filteredTodos = _.where(filteredTodos, {completed: false});
+    }
+
+    res.json(filteredTodos);
 });
 
 // GET /todos/:id
@@ -92,7 +101,7 @@ app.put('/todos/:id', function (req, res) {
     } else if (body.hasOwnProperty('description')) {
         return res.status(400).send();
     }
-    //udpdates matchedTody object via overriding already existing properties
+    //updates matchedTody object via overriding already existing properties
     _.extend(matchedTodo, validAttributes);
 
     res.json(matchedTodo);
