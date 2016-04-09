@@ -65,7 +65,7 @@ app.post('/todos', function (req, res) {
     }
 
     body.description = body.description.trim();
-    
+
     body.id = todoNextId++;
     todos.push(body);
 
@@ -87,6 +87,8 @@ app.delete('/todos/:id', function (req, res) {
     }
 
 });
+
+
 
 // PUT  /todos/:id
 app.put('/todos/:id', function (req, res) {
