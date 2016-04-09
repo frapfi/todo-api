@@ -1,6 +1,7 @@
 var express = require('express');
 var bodyParser = require('body-parser');
 var _  = require('underscore');
+var db = require('./db.js');
 
 var app = express();
 var PORT = process.env.PORT || 3000;
@@ -59,8 +60,16 @@ app.post('/todos', function (req, res) {
     //picks out only the completed and decription values of the object; all other chunky fields
     //will be filtered
     var body = _.pick(req.body, 'completed', 'description');
+    // e.g. { completed: false, description: 'walk the dog' }
+    // so body can be passed to db.to.create
 
-    if (!_.isBoolean(body.completed) || !_.isString(body.description) || body.description.trim().length === 0) {
+    db.todo.create(body).then(function (todo) { // you can now access the newly created todo via the variable todo
+        res.json(todo.toJSON());
+    }, function (e) {
+        res.status(400).json(e);
+    });
+
+    /*if (!_.isBoolean(body.completed) || !_.isString(body.description) || body.description.trim().length === 0) {
         return res.status(404).send();
     }
 
@@ -71,7 +80,7 @@ app.post('/todos', function (req, res) {
 
     //get stuff from server
     //with modified json object
-    res.json(body);
+    res.json(body);*/
 });
 
 // DELETE /todos/:id
@@ -120,6 +129,10 @@ app.put('/todos/:id', function (req, res) {
 
 });
 
-app.listen(PORT, function () {
-    console.log('Express listening on port ' + PORT + '!');
+// "sequelize.sync" will, based on your model definitions, create any missing tables
+// when done server is starting
+db.sequelize.sync().then(function () {
+    app.listen(PORT, function () {
+        console.log('Express listening on port ' + PORT + '!');
+    });
 });
