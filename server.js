@@ -42,13 +42,19 @@ app.get('/todos', function (req, res) {
 // GET /todos/:id
 app.get('/todos/:id', function (req, res) {
     var todoId = parseInt(req.params.id, 10);
-    var matchedTodo = _.findWhere(todos, {id: todoId});
 
-    if (matchedTodo) {
-        res.json(matchedTodo);
-    } else {
-        res.status(404).send();
-    }
+    db.todo.findById(todoId).then(function (todo) {
+        //take and value (e.g. an object) that is not a boolean and convert it into
+        // its truthy version
+        if(!!todo) {
+            res.json(todo.toJSON());
+        } else {
+            res.status(404).json(e);
+        }
+
+    }, function (e) {
+        res.status(500).json(e);
+    });
 });
 
 
@@ -57,8 +63,8 @@ app.post('/todos', function (req, res) {
 
     //send stuff to server via request
     //eg. json object
-    //picks out only the completed and decription values of the object; all other chunky fields
-    //will be filtered
+    //Return a copy of the object: picks out only the completed and description values of the object; 
+    //all other chunky fields will be filtered
     var body = _.pick(req.body, 'completed', 'description');
     // e.g. { completed: false, description: 'walk the dog' }
     // so body can be passed to db.to.create
@@ -129,7 +135,7 @@ app.put('/todos/:id', function (req, res) {
 
 });
 
-// "sequelize.sync" will, based on your model definitions, create any missing tables
+// "sequelize.sync" will, based on the model definitions, create any missing tables
 // when done server is starting
 db.sequelize.sync().then(function () {
     app.listen(PORT, function () {
