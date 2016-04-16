@@ -36,7 +36,7 @@ app.get('/todos', function (req, res) {
 
     db.todo.findAll({where: where}).then(function (todos) {
         res.json(todos)
-    }, function (e) {
+    }, function () {
         res.status(500).send();
     });
 
@@ -52,7 +52,7 @@ app.get('/todos/:id', function (req, res) {
         if(!!todo) {
             res.json(todo.toJSON());
         } else {
-            res.status(404).json(e);
+            res.status(404).json();
         }
 
     }, function (e) {
@@ -66,7 +66,7 @@ app.post('/todos', function (req, res) {
 
     //send stuff to server via request
     //eg. json object
-    //Return a copy of the object: picks out only the completed and description values of the object; 
+    //Return a copy of the object: picks out only the completed and description values of the object;
     //all other chunky fields will be filtered
     var body = _.pick(req.body, 'completed', 'description');
     // e.g. { completed: false, description: 'walk the dog' }
@@ -78,18 +78,7 @@ app.post('/todos', function (req, res) {
         res.status(400).json(e);
     });
 
-    /*if (!_.isBoolean(body.completed) || !_.isString(body.description) || body.description.trim().length === 0) {
-        return res.status(404).send();
-    }
 
-    body.description = body.description.trim();
-
-    body.id = todoNextId++;
-    todos.push(body);
-
-    //get stuff from server
-    //with modified json object
-    res.json(body);*/
 });
 
 // DELETE /todos/:id
@@ -115,35 +104,33 @@ app.delete('/todos/:id', function (req, res) {
 
 });
 
-
-
 // PUT  /todos/:id
 app.put('/todos/:id', function (req, res) {
     var todoId = parseInt(req.params.id, 10);
-    var matchedTodo = _.findWhere(todos, {id: todoId});
     var body = _.pick(req.body, 'completed', 'description');
-    var validAttributes = {};
+    var attributes = {};
 
-    if(!matchedTodo) {
-        return res.status(404).send();
+    if(body.hasOwnProperty('completed') ) {
+        attributes.completed = body.completed;
     }
 
-    if(body.hasOwnProperty('completed') && _.isBoolean(body.completed)) {
-        validAttributes.completed = body.completed;
-    } else if (body.hasOwnProperty('completed')) {
-        return res.status(400).send();
+    if(body.hasOwnProperty('description')) {
+        attributes.description = body.description;
     }
 
-    if(body.hasOwnProperty('description') && _.isString(body.description) && body.description.trim().length > 0) {
-        validAttributes.description = body.description;
-    } else if (body.hasOwnProperty('description')) {
-        return res.status(400).send();
-    }
-    //updates matchedTody object via overriding already existing properties
-    _.extend(matchedTodo, validAttributes);
-
-    res.json(matchedTodo);
-
+    db.todo.findById(todoId).then(function (todo) {
+        if(todo) {
+            todo.update(attributes).then(function (todo) { //if todo.update goes well
+                res.json(todo.toJSON());
+            }, function (e) { ////if todo.update goes poorly
+                res.status(400).json(e)
+            });
+        } else {
+            res.status(404).send();
+        }
+    }, function () {
+        res.status(500).send();
+    });
 
 });
 
